@@ -1,99 +1,125 @@
 # Datahub Endpoints
 
-These are the APIs provided by **OORT Datahub** for your plugin to call. Use these to report status, upload results, and manage file transfers.
+These are APIs provided by **Datahub** for plugins to call.
+**Base URL**: `https://datahub.oortech.com`
 
-## Base URL
-`https://datahub.oortech.com` (Production)
+## 1. File Upload
+**Principle**: Datahub only provides Presigned URLs. You upload file data directly to S3/OSS.
 
----
-
-## File Operations
-
-### 1. Initialize Upload
+### 1.1 Initialize Upload
 **POST** `/api/task/upload/init`
 
-Request a presigned URL to upload a file (e.g., task results).
+Supports single file or multipart (chunked) upload.
 
-#### Request Body
+#### Request
 ```json
 {
-  "task_id": "task_abc123",
-  "filename": "result.zip",
-  "file_size": 1048576
+	"subtask_id": "task_abc_001",
+	"file_name": "data.csv",
+	"file_size": 10485760,
+	"file_md5": "md5hash",
+	"chunk_size": 5242880  // Optional. If set, triggers multipart.
 }
 ```
 
 #### Response
-Returns a `upload_url` and `file_id`.
-
-### 2. Complete Upload
-**POST** `/api/task/upload/complete`
-
-Notify Datahub that the file upload to the presigned URL is finished.
-
-#### Request Body
 ```json
 {
-  "task_id": "task_abc123",
-  "file_id": "file_xyz789",
-  "status": "success"
+    "code": 0,
+    "data": {
+        "upload_id": "upload_123",
+        "part_upload_urls": [
+            { "index": 1, "url": "https://s3...part1" },
+            { "index": 2, "url": "https://s3...part2" }
+        ]
+    }
 }
 ```
 
-### 3. Get Download URL
-**GET** `/api/task/download/presign`
+### 1.2 Perform Upload (Direct to Storage)
+For each part, sending a `PUT` request to the `url`.
+*   **Response Header**: Capture the `ETag`. You need this for completion.
 
-Get a temporary URL to download a task input or resource file.
+### 1.3 Complete Upload
+**POST** `/api/task/upload/complete`
 
-#### Parameters
-*   `file_id`: The ID of the file to download.
+#### Request
+```json
+{
+    "upload_id": "upload_123",
+    "subtask_id": "task_abc_001",
+    "file_name": "data.csv",
+    "parts": [
+        { "index": 1, "etag": "\"etag1\"" },
+        { "index": 2, "etag": "\"etag2\"" }
+    ]
+}
+```
 
 ---
 
-## Task Management
+## 2. File Download
+**GET** `/api/task/download/presign`
 
-### 4. Update Task Status
+Get a presigned URL to download input files. Supports HTTP Range requests for resumable downloads.
+
+#### Request (Query)
+`subtask_id=task_abc_001`
+
+#### Response
+```json
+{
+  "code": 0,
+  "data": {
+    "download_url": "https://s3...",
+    "file_name": "input.zip"
+  }
+}
+```
+
+---
+
+## 3. Status & Result
+
+### 3.1 Update Status
 **POST** `/api/task/update_status`
 
-Report the current status of a task.
+Report state changes (e.g., Started, Paused, Failed).
 
-#### Request Body
+#### Request
 ```json
 {
-  "task_id": "task_abc123",
-  "status": "RUNNING",
-  "progress": 50,
-  "message": "Processing data..."
+    "subtask_id": "task_abc_001",
+    "status": 1  // 1: Running, 2: Paused, 4: Cancelled, 5: Failed
 }
 ```
 
-### 5. Task Heartbeat
+### 3.2 Heartbeat
 **POST** `/api/task/heartbeat`
 
-Send periodic heartbeats for long-running tasks to prevent timeouts.
+Send every ~30 seconds to keep task alive.
 
-#### Request Body
+#### Request
 ```json
 {
-  "task_id": "task_abc123"
+    "subtask_id": "task_abc_001",
+    "timestamp": 1704067200,
+    "process": 50
 }
 ```
 
-### 6. Report Task Result
+### 3.3 Submit Result
 **POST** `/api/task/result`
 
-Submit the final result of a task.
+Final submission when task is complete.
 
-#### Request Body
+#### Request
 ```json
 {
-  "task_id": "task_abc123",
-  "result_data": { ... },
-  "file_ids": ["file_xyz789"]
+    "subtask_id": "task_abc_001",
+    "result": {
+         "total_counts": 100,
+         "success_counts": 100
+    }
 }
 ```
-
-### 7. Notify / Query
-**GET** `/api/task/notify`
-
-Long-polling endpoint to check for updates or configuration changes for a task.

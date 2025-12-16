@@ -1,84 +1,104 @@
 # Plugin Endpoints
 
-These are the APIs that **your plugin must implement**. OORT Datahub will call these endpoints to manage tasks and services.
+These are the APIs that **your plugin must implement**. Datahub calls these to manage tasks.
 
-## Base URL
-The base URL for these endpoints is configured when you register your plugin (e.g., `https://my-plugin.com`).
+## 1. Frontend Configuration (JS)
+Datahub dynamically loads your plugin's JS to render the configuration UI.
 
----
+### Interface
+Your JS must return a module with `init` and `validateConfig` methods.
 
-## 1. Payment Validation (Optional)
-**POST** `/api/plugin/payment`
+```javascript
+return {
+  /**
+   * Initialize UI
+   * @param {string} containerId - DOM ID to render into
+   * @param {function} updateConfig - Callback to save config { key: value }
+   */
+  init: function(containerId, updateConfig) {
+      // 1. Render HTML into document.getElementById(containerId)
+      // 2. Bind events to inputs
+      // 3. Call updateConfig(newConfig) when inputs change
+  },
 
-Validates user payment for a service.
-
-### Request Body
-```json
-{
-  "user_address": "0x123...",
-  "service_id": "service_123",
-  "payment_details": { ... }
-}
+  /**
+   * Validate Configuration
+   * @param {object} config 
+   * @returns {object} { valid: boolean, message: string }
+   */
+  validateConfig: function(config) {
+      if (!config.keyword) return { valid: false, message: "Keyword required" };
+      return { valid: true, message: "" };
+  }
+};
 ```
 
 ---
 
-## 2. Create Task
+## 2. Server-side Endpoints
+
+### 2.1 Create Task
 **POST** `/api/plugin/create_task`
 
-Initiates a new task in your plugin.
+Initiates a task. The `config` object matches what your Frontend JS generated.
 
-### Request Body
+#### Request
 ```json
 {
-  "project_id": "proj_001",
-  "task_id": "task_abc123",
-  "user_address": "0xUserWallet",
-  "task_config": {
-    "key": "value",
-    "params": "..."
-  }
+    "subtask_id": "task_abc_001_ingest",
+    "config": {
+        "keyword": "cat",
+        "maxImages": 20
+    }
 }
 ```
 
-### Response
+#### Response
 ```json
-{
-  "code": 200,
-  "msg": "Task created",
-  "data": {
-    "task_id": "task_abc123"
-  }
-}
+{ "code": 0, "msg": "success", "data": null }
 ```
 
----
-
-## 3. Manage Task
+### 2.2 Manage Task
 **POST** `/api/plugin/manage_task`
 
-Control the lifecycle of a task (Pause, Resume, Cancel).
+Control task lifecycle (Pause/Resume/Cancel).
 
-### Request Body
+#### Request
 ```json
 {
-  "task_id": "task_abc123",
-  "action": "PAUSE" 
+    "subtask_id": "task_abc_001_ingest",
+    "status": 1
 }
 ```
-*   `action`: Can be `PAUSE`, `RESUME`, or `CANCEL`.
+*   `status`: `1` (Resume/Running), `2` (Pause), `4` (Cancel).
 
----
-
-## 4. Health Check
+### 2.3 Health Check
 **GET** `/api/plugin/health`
 
-Used by Datahub to check if your plugin is online.
+#### Request (Query)
+`timestamp=1763382017`
 
-### Response
+#### Response
 ```json
 {
-  "status": "up",
-  "version": "1.0.0"
+    "code": 0,
+    "msg": "success",
+    "status": "healthy",
+    "plugin": {
+        "uptime": 3600,
+        "version": "1.0.0",
+        "plugin_id": "plugin-6cb79301"
+    }
+}
+```
+
+### 2.4 Payment Validation (Optional)
+**POST** `/api/plugin/payment`
+
+#### Request
+```json
+{
+    "tx_hash": "0x123...",
+    "subtask_id": "task_abc_001_ingest"
 }
 ```
