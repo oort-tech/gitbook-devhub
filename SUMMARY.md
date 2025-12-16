@@ -6,6 +6,8 @@
 
 ## API Reference
 * [Overview](api/README.md)
+* [Plugin Endpoints](api/plugin-endpoints.md)
+* [Datahub Endpoints](api/datahub-endpoints.md)
 
 ## Use Cases
 * [Overview](use-cases/README.md)
