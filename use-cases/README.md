@@ -1,11 +1,13 @@
 # Use Cases
 
-Discover how OORT Datahub can be applied to real-world scenarios.
+Discover how OORT Datahub can be applied to real-world scenarios across the Data Supply Chain.
 
-## Common Use Cases
+## Featured Use Cases
+
+*   **[Web Crawler Plugin](web-crawler.md)** (Data Collection): Build tools to scrape and aggregate raw data from the web.
+*   **[Data Labeling](data-labeling.md)** (Data Processing): Create workflows for annotating data with human intelligence.
+
+## Other Examples
 
 *   **Decentralized AI Training**
-*   **Web3 Data Storage**
 *   **Censorship-Resistant Content Distribution**
-
-(More use cases coming soon.)
