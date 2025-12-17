@@ -13,3 +13,4 @@
 * [Overview](use-cases/README.md)
 * [Web Crawler (Collection)](use-cases/web-crawler.md)
 * [Data Labeling (Processing)](use-cases/data-labeling.md)
+* [Data Storage (Infrastructure)](use-cases/data-storage.md)
