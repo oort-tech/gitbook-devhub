@@ -5,9 +5,13 @@
 * [Getting Started](getting-started/quickstart.md)
 
 ## API Reference
-* [Overview](api/README.md)
-* [Plugin Endpoints](api/plugin-endpoints.md)
-* [Datahub Endpoints](api/datahub-endpoints.md)
+* [Introduction](api/README.md)
+* [Architecture & Workflow](api/architecture.md)
+* [Authentication](api/authentication.md)
+* [Backend: Plugin APIs](api/backend-plugin-api.md)
+* [Backend: Datahub APIs](api/backend-datahub-api.md)
+* [Frontend: Configuration UI](api/frontend-ui.md)
+* [Appendix](api/appendix.md)
 
 ## Use Cases
 * [Overview](use-cases/README.md)
